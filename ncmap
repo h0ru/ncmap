@@ -1,0 +1,77 @@
+#!/bin/bash
+mv ./ncmap /usr/local/bin/ 2>/dev/null
+
+#1)
+ echo -ne "
+        Ɲϲmαp
+
+     ♦ 2-in-1 Tool
+     ♦ By h0ru
+     ♦ Version 1.0
+ \n"
+
+#2)
+ if [[ $(id -u) -ne "0" ]]; then
+         echo " [!] Ɲϲmαp need root permission! " >&2
+         echo
+         exit 1
+ fi
+
+#3)
+ if ! command -v nc nmap &> /dev/null
+ then
+     echo  " [!] nc and/or nmap could not be found! "
+     echo
+     exit 1
+ fi
+
+#4)
+ PS3='Choose an option: '
+ type=(
+ "nmap"
+ "nc"
+ "Exit"
+ )
+ select var in "${type[@]}"; do
+ case $var in
+ "nmap")
+ read -p " [*] IP: " ip
+ echo
+ echo ' [TIP] Result of exit: "your choice/scanned.txt" '
+ read -p " [*] Scan result save directoy: " directoy
+
+ nmap -p- --open -sS --min-rate 5000 -vvv -n -Pn $ip -oG /tmp/scan.tmp
+
+ ports="$(cat /tmp/scan.tmp | grep -oP '\d{1,5}/open' | awk '{print $1}' FS='/' | xargs | tr ' ' ',')"
+
+ nmap -sCV $ip -p$ports -oN $directoy
+
+ rm /tmp/scan.tmp
+ exit
+ ;;
+ "nc")
+  echo -ne ' [TIPS]
+
+  [?] In Bindshell - The target machine is the listener!
+    "nc -nv IP PORT"
+
+  [?] In Reverse - Your machine is the listener!
+    "nc -lvnp"
+  \n'
+  read -p " [*] IP: " ip
+  read -p " [*] Port: " port
+  echo -ne '
+    Choose a mode:
+   1 for Bindshell
+   2 for Reverse
+  \n'
+  read -p " [*] Mode: " type
+  test "$type" = "1" && nc -nv $ip $port
+   or 2>/dev/null
+  test "$type" = "2" && nc -lvnp $port
+  ;;
+    "Exit")
+     exit
+      ;;
+    esac
+ done
